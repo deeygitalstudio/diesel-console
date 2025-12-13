@@ -36,7 +36,7 @@ button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
 
 <!-- Auth Panel -->
 <div class="--main"  id="authPanel">
-<div  class="card box2">
+<div  class="card box">
   <h4 class="--mb">Sign In / Register</h4>
   <label>First Name</label>
   <input id="firstName" placeholder="Your first name (for registration)" />
@@ -337,7 +337,7 @@ function renderHistory(items){
   filtered.forEach(it=>{
     const el=document.createElement('div'); el.className='history-item';
     const left=document.createElement('div'); left.className='flex-col';
-    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted bold small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small bold">Before: ${it.beforeLitres} L <br> After: ${it.afterLitres} L <br> Delivered: ${it.offloaded} L</div><div class=" bold small">Capacity: ${it.fullCap} L</div><div class="muted bold small">Dip Before H: ${it.dipBefore}cm</div><div class="muted bold small">Dip AFter H: ${it.dipAfter}cm</div>`;
+    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted bold small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small bold">Before: ${it.beforeLitres}Litres <br> After: ${it.afterLitres}Litres <br> Delivered: ${it.offloaded}Litres </div><div class=" bold small">Tank-Capacity: ${it.fullCap}Litres</div><div class="muted bold small">Dip Before Height: ${it.dipBefore}cm</div><div class="muted bold small">Dip AFter Height: ${it.dipAfter}cm</div>`;
     const right=document.createElement('div'); right.style.textAlign='right';
     right.innerHTML=`<div class="muted bold small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
     el.appendChild(left); el.appendChild(right); historyDiv.appendChild(el);
