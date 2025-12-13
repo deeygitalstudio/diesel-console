@@ -25,6 +25,7 @@ button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
 .result{margin-top:14px;padding:12px;border-radius:8px;background:#f8fbff;border:1px solid #e6f0ff;}
 .muted{color:var(--muted);font-size:13px;}
 .small{font-size:13px;}
+.bold{font-weight:500;}
 .history-list{max-height:66vh;overflow:auto;margin-top:12px;}
 .history-item{padding:6px;border-radius:8px;border:1px solid #eef3ff;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
 .flex-col{display:flex;flex-direction:column;gap:6px;}
@@ -336,9 +337,9 @@ function renderHistory(items){
   filtered.forEach(it=>{
     const el=document.createElement('div'); el.className='history-item';
     const left=document.createElement('div'); left.className='flex-col';
-    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small">Before: ${it.beforeLitres} L • After: ${it.afterLitres} L • Delivered: ${it.offloaded} L</div><div class="muted small">Capacity: ${it.fullCap} L</div><div class="muted small">Dip Before H: ${it.dipBefore}cm</div><div class="muted small">Dip AFter H: ${it.dipAfter}cm</div>`;
+    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted bold small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small bold">Before: ${it.beforeLitres} L <br> After: ${it.afterLitres} L <br> Delivered: ${it.offloaded} L</div><div class=" bold small">Capacity: ${it.fullCap} L</div><div class="muted bold small">Dip Before H: ${it.dipBefore}cm</div><div class="muted bold small">Dip AFter H: ${it.dipAfter}cm</div>`;
     const right=document.createElement('div'); right.style.textAlign='right';
-    right.innerHTML=`<div class="muted small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
+    right.innerHTML=`<div class="muted bold small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
     el.appendChild(left); el.appendChild(right); historyDiv.appendChild(el);
     right.querySelector('button').addEventListener('click', async (ev)=>{ const id=ev.currentTarget.getAttribute('data-id'); if(!confirm('Delete?')) return; try{ await deleteDoc(doc(db,'deliveries',id)); } catch(e){console.error(e); alert('Delete failed');} });
   });
