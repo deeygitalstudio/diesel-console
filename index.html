@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diesel Tank Measurement</title>
+<link rel="stylesheet" href="prestyled.css">
+<link rel="stylesheet" href="w3.css">
+<link rel="stylesheet" href="style.css">
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--accent:#0f62fe;--muted:#667085;}
+*{box-sizing:border-box;}
+body{font-family:Open Sans; sans-serif;margin:0;padding:20px;background:var(--bg);}
+.wrap{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:20px;}
+header{grid-column:1/-1;margin-bottom:10px;}
+h1{margin:0; font-size: 20px;}
+p.lead{margin:0;color:var(--muted);font-size:13px;}
+.card{background:var(--card);border-radius:10px;padding:18px;box-shadow:0 6px 18px rgba(16,24,40,0.06);}
+label{display:block;font-size:13px;color:var(--muted);margin-top:10px;}
+input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #e6eef8;font-size:14px;}
+button{padding:10px 14px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;}
+button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
+.row{display:flex;gap:10px;}
+.row> *{flex:1;}
+.result{margin-top:14px;padding:12px;border-radius:8px;background:#f8fbff;border:1px solid #e6f0ff;}
+.muted{color:var(--muted);font-size:13px;}
+.small{font-size:13px;}
+.history-list{max-height:66vh;overflow:auto;margin-top:12px;}
+.history-item{padding:10px;border-radius:8px;border:1px solid #eef3ff;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
+.flex-col{display:flex;flex-direction:column;gap:6px;}
+@media (max-width:980px){.wrap{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- Auth Panel -->
+<div class="--main"  id="authPanel">
+<div  class="card box2">
+  <h4 class="--mb">Sign In / Register</h4>
+  <label>First Name</label>
+  <input id="firstName" placeholder="Your first name (for registration)" />
+  <label>Email</label>
+  <input id="email" type="email" placeholder="Email" />
+  <label>Password</label>
+  <input id="password" type="password" placeholder="Password" />
+  <div style="margin-top:10px;display:flex;gap:10px">
+    <button id="registerBtn">Register</button>
+    <button id="loginBtn" class="ghost
+    ">Login</button>
+    <button id="logoutBtn" class="ghost" style="display:none">Logout</button>
+  </div>
+  <p class="muted small" id="authMsg"></p>
+</div>
+</div>
+
+
+
+
+<div class="wrap" style="display: none;">
+<!-- Header -->
+<header>
+<h4>Diesel Tank Measurement Console</h4>
+<p class="lead">Calculate diesel volumes for rectangular, vertical, and horizontal tanks — save records to Firestore.</p>
+ <div class="muted small" style="font-weight: 600; margin-top: 30px" id="welcomeUser"></div>
+</header>
+
+<!-- Left: Calculator -->
+<div class="card">
+<label>Site / Location (optional)</label>
+<input id="site" placeholder="e.g. Mast A - Ikeja" />
+
+<label>Tank Type</label>
+<select id="tankType">
+<option value="rectangular">Rectangular</option>
+<option value="vertical">Vertical Cylindrical</option>
+<option value="horizontal">Horizontal Cylindrical</option>
+</select>
+
+<div id="fields" style="margin-top:8px"></div>
+
+<div class="row" style="margin-top:10px">
+<div>
+<label>Before Offload Dip (cm)</label>
+<input id="dipBefore" type="number" placeholder="Measured dip before offload" />
+</div>
+<div>
+<label>After Offload Dip (cm)</label>
+<input id="dipAfter" type="number" placeholder="Measured dip after offload" />
+</div>
+</div>
+
+<div style="display:flex;gap:10px;margin-top:12px">
+<button id="calcBtn">Calculate</button>
+<button id="saveBtn" class="ghost">Save to Database</button>
+<button id="clearBtn" class="ghost">Clear</button>
+</div>
+
+<div id="resultPanel" class="result" style="display:none"></div>
+</div>
+
+<!-- Right: History -->
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<strong>Saved Records</strong>
+<div class="muted small" id="status">Connecting...</div>
+</div>
+
+<div style="margin-top:10px;display:flex;gap:8px">
+<input id="filterSite" placeholder="Filter by site..." class="small" style="flex:1;padding:8px" />
+<button id="refreshBtn" class="ghost">Refresh</button>
+</div>
+
+<div class="history-list" id="history"></div>
+<div style="margin-top:10px;display:flex;gap:8px">
+<button id="clearAllBtn" class="ghost">Clear local form</button>
+<button id="downloadBtn" class="ghost">Download CSV</button>
+</div>
+</div>
+</div>
+
+<!-- Firebase v9 modular -->
+<script type="module">
+// ----- REPLACE firebaseConfig with your project's config -----
+  const firebaseConfig = {
+    apiKey: "AIzaSyD9UrQ00Sc8PYz64XWJlD7waAag0t7-9Zg",
+    authDomain: "diesel-validation.firebaseapp.com",
+    projectId: "diesel-validation",
+    storageBucket: "diesel-validation.firebasestorage.app",
+    messagingSenderId: "1095316155288",
+    appId: "1:1095316155288:web:c4cdb3047abb4f005219ed"
+  };
+// --------------------------------------------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy, enableIndexedDbPersistence, getDocs, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+// init Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+try { await enableIndexedDbPersistence(db); document.getElementById('status').innerText='Offline persistence enabled'; } 
+catch(e){ console.warn(e); document.getElementById('status').innerText='Connected (no persistence)'; }
+
+// ---- AUTH ----
+const firstNameInput = document.getElementById('firstName');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const registerBtn = document.getElementById('registerBtn');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const authMsg = document.getElementById('authMsg');
+const authPanel = document.getElementById('authPanel');
+const wrap = document.querySelector('.wrap');
+
+registerBtn.addEventListener('click', async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  const firstName = firstNameInput.value.trim();
+  if(!email || !password || !firstName){ alert('Fill all fields'); return; }
+  try {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    await addDoc(collection(db,'users'), { uid: userCred.user.uid, firstName, email });
+    alert('Registered ✓, logged in');
+  } catch(e){ console.error(e); alert(e.message) }
+});
+
+loginBtn.addEventListener('click', async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  if(!email || !password){ alert('Fill all fields'); return; }
+  try{
+    await signInWithEmailAndPassword(auth, email, password);
+    authMsg.innerText='Logged in ✓';
+  } catch(e){ console.error(e); authMsg.innerText = e.message; }
+});
+
+logoutBtn.addEventListener('click', async () => { await signOut(auth); });
+
+onAuthStateChanged(auth, user => {
+  if(user){
+      authPanel.style.display='none';
+    wrap.style.display='grid'; 
+    logoutBtn.style.display='inline-block';
+    loadUserProfile(user.uid);
+  } else {
+      authPanel.style.display='block';
+    wrap.style.display='none';
+    logoutBtn.style.display='none';
+     welcomeUser.innerText = '';
+  }
+});
+
+const welcomeUser = document.getElementById('welcomeUser');
+
+async function loadUserProfile(uid){
+  try{
+    const q = query(collection(db,'users'), where('uid','==',uid));
+    const snap = await getDocs(q);
+    if(!snap.empty){
+      const userData = snap.docs[0].data();
+      welcomeUser.innerText = `Welcome, ${userData.firstName}`;
+    } else {
+      welcomeUser.innerText = 'Welcome';
+    }
+  } catch(e){
+    console.error(e);
+    welcomeUser.innerText = 'Welcome';
+  }
+}
+
+
+// ---- DIESEL CALCULATOR ----
+const tankType = document.getElementById('tankType');
+const fields = document.getElementById('fields');
+const calcBtn = document.getElementById('calcBtn');
+const saveBtn = document.getElementById('saveBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultPanel = document.getElementById('resultPanel');
+const siteInput = document.getElementById('site');
+const dipBefore = document.getElementById('dipBefore');
+const dipAfter = document.getElementById('dipAfter');
+const filterSite = document.getElementById('filterSite');
+const refreshBtn = document.getElementById('refreshBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const historyDiv = document.getElementById('history');
+let current = null;
+
+function renderFields(){
+  const t = tankType.value;
+  if(t==='rectangular'){
+    fields.innerHTML=`
+<label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 120">
+<label>Width (cm)</label><input id="W" type="number" placeholder="e.g. 60">
+<label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 80">`;
+  } else if(t==='vertical'){
+    fields.innerHTML=`
+<label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
+<label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 160">`;
+  } else if(t==='horizontal'){
+    fields.innerHTML=`
+<label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
+<label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 150">`;
+  }
+}
+tankType.addEventListener('change', renderFields);
+renderFields();
+
+function round(v){ return Math.round((v + Number.EPSILON) * 100)/100; }
+
+function calculate(){
+  const t = tankType.value;
+  const beforeH = parseFloat(dipBefore.value);
+  const afterH = parseFloat(dipAfter.value);
+  let fullCap=0, nowLitres=0, afterLitres=0;
+
+  try{
+    if(t==='rectangular'){
+      const L = parseFloat(document.getElementById('L').value);
+      const W = parseFloat(document.getElementById('W').value);
+      const H = parseFloat(document.getElementById('H').value);
+
+      if(!L||!W||!H) throw "Enter length, width and tank height";
+      fullCap = L*W*H/1000;
+      if(!isNaN(beforeH)) nowLitres = L*W*beforeH/1000;
+      if(!isNaN(afterH)) afterLitres = L*W*afterH/1000;
+
+    } else if(t==='vertical'){
+      const R = parseFloat(document.getElementById('R').value);
+      const H = parseFloat(document.getElementById('H').value);
+
+      if(!R||!H) throw "Enter radius and tank height";
+      fullCap = Math.PI*R*R*H/1000;
+      if(!isNaN(beforeH)) nowLitres = Math.PI*R*R*beforeH/1000;
+      if(!isNaN(afterH)) afterLitres = Math.PI*R*R*afterH/1000;
+      
+    } else if(t==='horizontal'){
+      const R = parseFloat(document.getElementById('R').value);
+      const L = parseFloat(document.getElementById('L').value);
+
+      if(!R||!L) throw "Enter radius and length";
+      function horiz(dip){ dip=Math.min(dip,2*R); const theta=Math.acos((R-dip)/R); const area=R*R*(theta-Math.sin(2*theta)/2); return area*L/1000;}
+      fullCap = horiz(2*R);
+      if(!isNaN(beforeH)) nowLitres=horiz(beforeH);
+      if(!isNaN(afterH)) afterLitres=horiz(afterH);
+    }
+
+    const offloaded = afterLitres-nowLitres;
+
+    current = {tankType:t, beforeLitres:round(nowLitres), afterLitres:round(afterLitres), offloaded:round(offloaded), dipBefore:round(beforeH), dipAfter:round(afterH), fullCap:round(fullCap), dims:readDims(t), site:siteInput.value||null, uid:auth.currentUser?.uid};
+    resultPanel.style.display='block';
+    resultPanel.innerHTML=` 
+<p><strong>Before Offload:</strong> ${current.beforeLitres} L</p>
+<p><strong>After Offload:</strong> ${current.afterLitres} L</p>
+<p><strong>Diesel Delivered:</strong> ${current.offloaded} L</p>
+<hr>
+<p><strong>Tank Capacity:</strong> ${current.fullCap} L</p>`;
+    return current;
+  }catch(err){ alert(err); return null; }
+}
+
+function readDims(t){
+  if(t==='rectangular') return {length_cm:parseFloat(document.getElementById('L').value), width_cm:parseFloat(document.getElementById('W').value), height_cm:parseFloat(document.getElementById('H').value)};
+  if(t==='vertical') return {radius_cm:parseFloat(document.getElementById('R').value), height_cm:parseFloat(document.getElementById('H').value)};
+  return {radius_cm:parseFloat(document.getElementById('R').value), length_cm:parseFloat(document.getElementById('L').value)};
+}
+
+calcBtn.addEventListener('click', calculate);
+
+clearBtn.addEventListener('click', ()=>{ siteInput.value=''; dipBefore.value=''; dipAfter.value=''; document.querySelectorAll('#fields input').forEach(i=>i.value=''); resultPanel.style.display='none'; current=null; });
+
+// Firestore operations
+const deliveriesRef = collection(db,'deliveries');
+saveBtn.addEventListener('click', async ()=>{
+  if(!auth.currentUser){ alert('Sign in first'); return; }
+  if(!current) calculate();
+  if(!current) return;
+  try{ await addDoc(deliveriesRef,{...current, createdAt:new Date()}); alert('Saved ✓'); } 
+  catch(e){ console.error(e); alert('Save failed'); }
+});
+
+const q = query(deliveriesRef, orderBy('createdAt','desc'));
+onSnapshot(q,snapshot=>{
+  const docs=[];
+  snapshot.forEach(d=>docs.push({id:d.id,...d.data()}));
+  renderHistory(docs);
+  document.getElementById('status').innerText=`Live — ${docs.filter(d=>d.uid===auth.currentUser?.uid).length} record(s)`;
+});
+
+function renderHistory(items){
+  const filter=filterSite.value.trim().toLowerCase();
+  historyDiv.innerHTML='';
+  const filtered=items.filter(it=>(it.uid===auth.currentUser?.uid) && (!filter||((it.site||'').toLowerCase().includes(filter))));
+  if(filtered.length===0){ historyDiv.innerHTML='<div class="muted small" style="padding:12px">No records found.</div>'; return; }
+  filtered.forEach(it=>{
+    const el=document.createElement('div'); el.className='history-item';
+    const left=document.createElement('div'); left.className='flex-col';
+    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small">Before: ${it.beforeLitres} L • After: ${it.afterLitres} L • Delivered: ${it.offloaded} L</div><div class="muted small">Capacity: ${it.fullCap} L</div><div class="muted small">Dip Before H: ${it.dipBefore}cm</div><div class="muted small">Dip AFter H: ${it.dipAfter}cm</div>`;
+    const right=document.createElement('div'); right.style.textAlign='right';
+    right.innerHTML=`<div class="muted small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
+    el.appendChild(left); el.appendChild(right); historyDiv.appendChild(el);
+    right.querySelector('button').addEventListener('click', async (ev)=>{ const id=ev.currentTarget.getAttribute('data-id'); if(!confirm('Delete?')) return; try{ await deleteDoc(doc(db,'deliveries',id)); } catch(e){console.error(e); alert('Delete failed');} });
+  });
+}
+
+function renderDims(d){ if(!d) return ''; return Object.entries(d).map(([k,v])=>`${k.replace(/_/g,' ')}:${v}`).join(' • '); }
+function formatDate(d){ if(!d) return '—'; try{return new Date(d).toLocaleString();}catch(e){return String(d);} }
+
+filterSite.addEventListener('input',()=>{ refreshBtn.click(); });
+refreshBtn.addEventListener('click',async ()=>{
+  if(!auth.currentUser){ alert('Sign in first'); return; }
+  try{ const snap=await getDocs(q); renderHistory(snap.docs.map(d=>({id:d.id,...d.data()}))); } 
+  catch(e){ console.error(e); alert('Refresh failed'); }
+});
+
+downloadBtn.addEventListener('click',async ()=>{
+  if(!auth.currentUser){ alert('Sign in first'); return; }
+  try{
+    const snap=await getDocs(q);
+    const docs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>d.uid===auth.currentUser?.uid);
+    if(docs.length===0){alert('No records to download'); return;}
+    const header=['id','site','tankType','beforeLitres','afterLitres','offloaded','fullCap','dims','createdAt'];
+    const rows=[header.join(',')];
+    docs.forEach(r=>rows.push([csvSafe(r.id),csvSafe(r.site),csvSafe(r.tankType),csvSafe(r.beforeLitres),csvSafe(r.afterLitres),csvSafe(r.offloaded),csvSafe(r.fullCap),csvSafe(JSON.stringify(r.dims)),csvSafe(r.createdAt?.toDate?r.createdAt.toDate().toISOString():r.createdAt)].join(',')));
+    const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='deliveries.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  } catch(e){console.error(e); alert('Download failed');}
+});
+
+function csvSafe(v){ return v===null||v===undefined?'':`"${String(v).replace(/"/g,'""')}"`; }
+clearAllBtn.addEventListener('click',()=>{ if(!confirm('Clear local form fields?')) return; siteInput.value=''; dipBefore.value=''; dipAfter.value=''; document.querySelectorAll('#fields input').forEach(i=>i.value=''); resultPanel.style.display='none'; current=null; });
+
+</script>
+</body>
+</html>
