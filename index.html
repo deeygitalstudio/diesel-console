@@ -37,7 +37,7 @@ button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
 <!-- Auth Panel -->
 <div class="--main"  id="authPanel">
 <div  class="card box">
-  <h4 class="--mb">Sign In / Register</h4>
+  <h4 class="--mb">Register</h4>
   <label>First Name</label>
   <input id="firstName" placeholder="Your first name (for registration)" />
   <label>Email</label>
@@ -57,7 +57,7 @@ button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
 
 
 
-<div class="wrap" style="display: none;">
+<div class="wrap">
 <!-- Header -->
 <header>
 <h4>Diesel Tank Measurement Console</h4>
@@ -158,7 +158,11 @@ registerBtn.addEventListener('click', async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
   const firstName = firstNameInput.value.trim();
-  if(!email || !password || !firstName){ alert('Fill all fields'); return; }
+
+  if(!email || !password || !firstName){ 
+    alert('Fill all fields');
+     return; }
+
   try {
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     await addDoc(collection(db,'users'), { uid: userCred.user.uid, firstName, email });
@@ -169,14 +173,20 @@ registerBtn.addEventListener('click', async () => {
 loginBtn.addEventListener('click', async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-  if(!email || !password){ alert('Fill all fields'); return; }
+
+  if(!email || !password){ 
+    alert('Fill all fields'); return;
+  }
   try{
     await signInWithEmailAndPassword(auth, email, password);
     authMsg.innerText='Logged in ✓';
   } catch(e){ console.error(e); authMsg.innerText = e.message; }
 });
 
-logoutBtn.addEventListener('click', async () => { await signOut(auth); });
+
+logoutBtn.addEventListener('click', async () => { 
+  await signOut(auth); 
+});
 
 onAuthStateChanged(auth, user => {
   if(user){
@@ -230,33 +240,42 @@ let current = null;
 
 function renderFields(){
   const t = tankType.value;
+  fields.innerHTML='';
+
   if(t==='rectangular'){
     fields.innerHTML=`
 <label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 120">
 <label>Width (cm)</label><input id="W" type="number" placeholder="e.g. 60">
 <label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 80">`;
+
   } else if(t==='vertical'){
     fields.innerHTML=`
 <label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
 <label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 160">`;
+
   } else if(t==='horizontal'){
     fields.innerHTML=`
 <label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
 <label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 150">`;
   }
 }
+
 tankType.addEventListener('change', renderFields);
 renderFields();
 
-function round(v){ return Math.round((v + Number.EPSILON) * 100)/100; }
+function round(v){ 
+  return Math.round((v + Number.EPSILON) * 100)/100; 
+}
+
 
 function calculate(){
   const t = tankType.value;
   const beforeH = parseFloat(dipBefore.value);
   const afterH = parseFloat(dipAfter.value);
-  let fullCap=0, nowLitres=0, afterLitres=0;
+  let fullCap = 0, nowLitres = 0, afterLitres = 0;
 
   try{
+
     if(t==='rectangular'){
       const L = parseFloat(document.getElementById('L').value);
       const W = parseFloat(document.getElementById('W').value);
@@ -281,43 +300,67 @@ function calculate(){
       const L = parseFloat(document.getElementById('L').value);
 
       if(!R||!L) throw "Enter radius and length";
-      function horiz(dip){ dip=Math.min(dip,2*R); const theta=Math.acos((R-dip)/R); const area=R*R*(theta-Math.sin(2*theta)/2); return area*L/1000;}
-      fullCap = horiz(2*R);
-      if(!isNaN(beforeH)) nowLitres=horiz(beforeH);
-      if(!isNaN(afterH)) afterLitres=horiz(afterH);
+
+      function horiz(dip){ 
+        dip=Math.min(dip,2*R); 
+        const theta=Math.acos((R-dip)/R); 
+        const area=R*R*(theta-Math.sin(2*theta)/2); 
+        return area*L/1000;
+      }
+
+      fullCap = horiz(2*R); 
+
+      if(!isNaN(beforeH)) nowLitres = horiz(beforeH);
+      if(!isNaN(afterH)) afterLitres =horiz(afterH);
     }
 
     const offloaded = afterLitres-nowLitres;
 
     current = {tankType:t, beforeLitres:round(nowLitres), afterLitres:round(afterLitres), offloaded:round(offloaded), dipBefore:round(beforeH), dipAfter:round(afterH), fullCap:round(fullCap), dims:readDims(t), site:siteInput.value||null, uid:auth.currentUser?.uid};
+
     resultPanel.style.display='block';
+
     resultPanel.innerHTML=` 
-<p><strong>Before Offload:</strong> ${current.beforeLitres} L</p>
-<p><strong>After Offload:</strong> ${current.afterLitres} L</p>
-<p><strong>Diesel Delivered:</strong> ${current.offloaded} L</p>
+<p><strong>Before Offload:</strong> ${current.beforeLitres}Litres</p>
+<p><strong>After Offload:</strong> ${current.afterLitres}Litres</p>
+<p><strong>Diesel Delivered:</strong> ${current.offloaded}Litres</p>
 <hr>
-<p><strong>Tank Capacity:</strong> ${current.fullCap} L</p>`;
+<p><strong>Tank Capacity:</strong> ${current.fullCap}Litres</p>`;
     return current;
   }catch(err){ alert(err); return null; }
 }
 
 function readDims(t){
   if(t==='rectangular') return {length_cm:parseFloat(document.getElementById('L').value), width_cm:parseFloat(document.getElementById('W').value), height_cm:parseFloat(document.getElementById('H').value)};
-  if(t==='vertical') return {radius_cm:parseFloat(document.getElementById('R').value), height_cm:parseFloat(document.getElementById('H').value)};
+  if(t==='vertical') return {radius_cm:parseFloat(document.getElementById('R').value), 
+  height_cm:parseFloat(document.getElementById('H').value)};
   return {radius_cm:parseFloat(document.getElementById('R').value), length_cm:parseFloat(document.getElementById('L').value)};
 }
 
 calcBtn.addEventListener('click', calculate);
 
-clearBtn.addEventListener('click', ()=>{ siteInput.value=''; dipBefore.value=''; dipAfter.value=''; document.querySelectorAll('#fields input').forEach(i=>i.value=''); resultPanel.style.display='none'; current=null; });
+clearBtn.addEventListener('click', ()=> { 
+  siteInput.value=''; dipBefore.value=''; 
+  dipAfter.value='';
+  document.querySelectorAll('#fields input').forEach(i => i.value = ''); 
+  resultPanel.style.display='none'; current=null; 
+});
 
 // Firestore operations
 const deliveriesRef = collection(db,'deliveries');
+
 saveBtn.addEventListener('click', async ()=>{
-  if(!auth.currentUser){ alert('Sign in first'); return; }
+
+  if(!auth.currentUser){ 
+    alert('Sign in first');
+    return; }
+
   if(!current) calculate();
   if(!current) return;
-  try{ await addDoc(deliveriesRef,{...current, createdAt:new Date()}); alert('Saved ✓'); } 
+  try{ 
+    await addDoc(deliveriesRef,{...current, createdAt:new Date()}); 
+    alert('Saved ✓'); 
+  } 
   catch(e){ console.error(e); alert('Save failed'); }
 });
 
@@ -333,44 +376,114 @@ function renderHistory(items){
   const filter=filterSite.value.trim().toLowerCase();
   historyDiv.innerHTML='';
   const filtered=items.filter(it=>(it.uid===auth.currentUser?.uid) && (!filter||((it.site||'').toLowerCase().includes(filter))));
+
   if(filtered.length===0){ historyDiv.innerHTML='<div class="muted small" style="padding:12px">No records found.</div>'; return; }
+
   filtered.forEach(it=>{
     const el=document.createElement('div'); el.className='history-item';
     const left=document.createElement('div'); left.className='flex-col';
-    left.innerHTML=`<strong>${it.site||'—'}</strong><div class="muted bold small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div><div class="muted small bold">Before: ${it.beforeLitres}Litres <br> After: ${it.afterLitres}Litres <br> Delivered: ${it.offloaded}Litres </div><div class=" bold small">Tank-Capacity: ${it.fullCap}Litres</div><div class="muted bold small">Dip Before Height: ${it.dipBefore}cm</div><div class="muted bold small">Dip AFter Height: ${it.dipAfter}cm</div>`;
-    const right=document.createElement('div'); right.style.textAlign='right';
-    right.innerHTML=`<div class="muted bold small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
-    el.appendChild(left); el.appendChild(right); historyDiv.appendChild(el);
-    right.querySelector('button').addEventListener('click', async (ev)=>{ const id=ev.currentTarget.getAttribute('data-id'); if(!confirm('Delete?')) return; try{ await deleteDoc(doc(db,'deliveries',id)); } catch(e){console.error(e); alert('Delete failed');} });
+
+    left.innerHTML =
+    
+    ` <strong>${it.site||'—'}</strong>
+    <div class="muted bold small">${it.tankType.toUpperCase()} • ${formatDate(it.createdAt?.toDate?it.createdAt.toDate():it.createdAt)}</div>
+    <div class="muted small bold">Before: ${it.beforeLitres}Litres <br> After: ${it.afterLitres}Litres <br> Delivered: ${it.offloaded}Litres </div>
+    <div class=" bold small">Tank-Capacity: ${round(it.fullCap)}Litres</div>
+    <div class="muted bold small">Dip Before Height: ${it.dipBefore}cm</div>
+    <div class="muted bold small">Dip AFter Height: ${it.dipAfter}cm</div>`;  
+
+    const right=document.createElement('div'); 
+    right.style.textAlign='right';  
+
+    right.innerHTML =
+    `<div class="muted bold small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
+
+    el.appendChild(left); 
+    el.appendChild(right); 
+
+    historyDiv.appendChild(el);
+
+    right.querySelector('button').addEventListener('click', async (ev)=>{
+       const id=ev.currentTarget.getAttribute('data-id'); if(!confirm('Delete?')) return;
+        try{ await deleteDoc(doc(db,'deliveries',id)); 
+      } catch(e){console.error(e); 
+        alert('Delete failed');
+      } 
+      });
   });
 }
 
-function renderDims(d){ if(!d) return ''; return Object.entries(d).map(([k,v])=>`${k.replace(/_/g,' ')}:${v}`).join(' • '); }
-function formatDate(d){ if(!d) return '—'; try{return new Date(d).toLocaleString();}catch(e){return String(d);} }
+function renderDims(d){ 
+  if(!d) return ''; 
+  return Object.entries(d).map(([k,v]) => `${k.replace(/_/g,' ')}:${v}`).join(' • ');
+ }
+ 
+function formatDate(d){ 
+  if(!d) return '—'; try{return new Date(d).toLocaleString();
+  }catch(e){
+    return String(d);} 
+  }
 
-filterSite.addEventListener('input',()=>{ refreshBtn.click(); });
-refreshBtn.addEventListener('click',async ()=>{
+filterSite.addEventListener('input',() => { 
+  refreshBtn.click(); 
+});
+
+refreshBtn.addEventListener('click', async () => {
   if(!auth.currentUser){ alert('Sign in first'); return; }
-  try{ const snap=await getDocs(q); renderHistory(snap.docs.map(d=>({id:d.id,...d.data()}))); } 
+  try{ 
+    const snap=await getDocs(q); renderHistory(snap.docs.map(d=>({id:d.id,...d.data()}))); 
+  } 
   catch(e){ console.error(e); alert('Refresh failed'); }
 });
 
-downloadBtn.addEventListener('click',async ()=>{
-  if(!auth.currentUser){ alert('Sign in first'); return; }
+downloadBtn.addEventListener('click',async () => {
+
+  if(!auth.currentUser){ 
+    alert('Sign in first'); 
+    return; 
+  }
+
   try{
     const snap=await getDocs(q);
     const docs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>d.uid===auth.currentUser?.uid);
-    if(docs.length===0){alert('No records to download'); return;}
+
+    if(docs.length===0)
+    {alert('No records to download');
+     return;
+    }
+
     const header=['id','site','tankType','beforeLitres','afterLitres','offloaded','fullCap','dims','createdAt'];
+
     const rows=[header.join(',')];
-    docs.forEach(r=>rows.push([csvSafe(r.id),csvSafe(r.site),csvSafe(r.tankType),csvSafe(r.beforeLitres),csvSafe(r.afterLitres),csvSafe(r.offloaded),csvSafe(r.fullCap),csvSafe(JSON.stringify(r.dims)),csvSafe(r.createdAt?.toDate?r.createdAt.toDate().toISOString():r.createdAt)].join(',')));
-    const blob=new Blob([rows.join('\n')],{type:'text/csv'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='deliveries.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  } catch(e){console.error(e); alert('Download failed');}
+    
+    docs.forEach(r => rows.push([csvSafe(r.id),csvSafe(r.site),csvSafe(r.tankType),csvSafe(r.beforeLitres),csvSafe(r.afterLitres),csvSafe(r.offloaded),csvSafe(r.fullCap),csvSafe(JSON.stringify(r.dims)),csvSafe(r.createdAt?.toDate?r.createdAt.toDate().toISOString():r.createdAt)].join(','))); 
+
+    const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);  
+    const a=document.createElement('a'); 
+    a.href=url; 
+    a.download='deliveries.csv'; 
+    document.body.appendChild(a); 
+    a.click(); 
+    a.remove(); 
+    URL.revokeObjectURL(url);
+  } catch(e){console.error(e); 
+    alert('Download failed');
+  }
 });
 
-function csvSafe(v){ return v===null||v===undefined?'':`"${String(v).replace(/"/g,'""')}"`; }
-clearAllBtn.addEventListener('click',()=>{ if(!confirm('Clear local form fields?')) return; siteInput.value=''; dipBefore.value=''; dipAfter.value=''; document.querySelectorAll('#fields input').forEach(i=>i.value=''); resultPanel.style.display='none'; current=null; });
+function csvSafe(v){ 
+  return v === null || v === undefined ? '' : `"${String(v).replace(/"/g,'""')}"`; 
+}
+
+clearAllBtn.addEventListener('click',() => { 
+  if(!confirm('Clear local form fields?')) return; 
+  siteInput.value=''; dipBefore.value='';
+   dipAfter.value=''; 
+   document.querySelectorAll('#fields input').forEach(i=>i.value=''); 
+   resultPanel.style.display='none';
+    current=null; 
+  });
 
 </script>
 </body>

@@ -1,4 +1,4 @@
 #authPanel,
-#appContent {
+.wrap{
   display: none;
 }
