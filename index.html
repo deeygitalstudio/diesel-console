@@ -151,7 +151,6 @@ const registerBtn = document.getElementById('registerBtn');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const authMsg = document.getElementById('authMsg');
-const authPanel = document.getElementById('authPanel');
 const wrap = document.querySelector('.wrap');
 
 registerBtn.addEventListener('click', async () => {
@@ -188,6 +187,7 @@ logoutBtn.addEventListener('click', async () => {
   await signOut(auth); 
 });
 
+ 
 onAuthStateChanged(auth, user => {
   if(user){
       authPanel.style.display='none';
@@ -316,7 +316,7 @@ function calculate(){
 
     const offloaded = afterLitres-nowLitres;
 
-    current = {tankType:t, beforeLitres:round(nowLitres), afterLitres:round(afterLitres), offloaded:round(offloaded), dipBefore:round(beforeH), dipAfter:round(afterH), fullCap:round(fullCap), dims:readDims(t), site:siteInput.value||null, uid:auth.currentUser?.uid};
+    current = {tankType: t, beforeLitres:round(nowLitres), afterLitres:round(afterLitres), offloaded:round(offloaded), dipBefore:round(beforeH), dipAfter:round(afterH), fullCap:round(fullCap), dims:readDims(t), site:siteInput.value||null, uid:auth.currentUser?.uid};
 
     resultPanel.style.display='block';
 
@@ -369,17 +369,22 @@ onSnapshot(q,snapshot=>{
   const docs=[];
   snapshot.forEach(d=>docs.push({id:d.id,...d.data()}));
   renderHistory(docs);
-  document.getElementById('status').innerText=`Live — ${docs.filter(d=>d.uid===auth.currentUser?.uid).length} record(s)`;
+  document.getElementById('status').innerText=`Live — ${docs.filter (d => d.uid === auth.currentUser?.uid).length} record(s)`;
 });
 
 function renderHistory(items){
-  const filter=filterSite.value.trim().toLowerCase();
+  const filter = filterSite.value.trim().toLowerCase();
   historyDiv.innerHTML='';
-  const filtered=items.filter(it=>(it.uid===auth.currentUser?.uid) && (!filter||((it.site||'').toLowerCase().includes(filter))));
+  const filtered = items.filter(it => (it.uid === auth.currentUser ?.uid) && (!filter||((it.site||'').toLowerCase().includes(filter))));
 
-  if(filtered.length===0){ historyDiv.innerHTML='<div class="muted small" style="padding:12px">No records found.</div>'; return; }
+  if(filtered.length === 0){ 
+    historyDiv.innerHTML='<div class="muted small" style="padding:12px">No records found.</div>'; 
+    return;
+     }
 
-  filtered.forEach(it=>{
+  filtered.forEach(it => {
+    console.log(it.site);
+    
     const el=document.createElement('div'); el.className='history-item';
     const left=document.createElement('div'); left.className='flex-col';
 
