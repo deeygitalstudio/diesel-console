@@ -1,124 +1,220 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diesel Tank Measurement</title>
-<link rel="stylesheet" href="prestyled.css">
-<link rel="stylesheet" href="w3.css">
-<link rel="stylesheet" href="style.css">
-<style>
-:root{--bg:#f3f6fb;--card:#fff;--accent:#0f62fe;--muted:#667085;}
-*{box-sizing:border-box;}
-body{font-family:Open Sans sans-serif; margin:0;padding:10px;background:var(--bg);}
-.wrap{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 420px;gap:20px;}
-header{grid-column:1/-1;margin-bottom:10px;}
-h1{margin:0; font-size: 20px;}
-p.lead{margin:0;color:var(--muted);font-size:13px;}
-.card{background:var(--card);border-radius:10px;padding:13px;box-shadow:0 6px 18px rgba(16,24,40,0.06);}
-label{display:block;font-size:13px;color:var(--muted);margin-top:10px;}
-input,select{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #e6eef8;font-size:14px;}
-button{padding:10px 14px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;}
-button.ghost{background:#eef3ff;color:var(--accent);border:1px solid #d6e4ff;}
-.row{display:flex;gap:10px;}
-.row> *{flex:1;}
-.result{margin-top:14px;padding:12px;border-radius:8px;background:#f8fbff;border:1px solid #e6f0ff;}
-.muted{color:var(--muted);font-size:13px;}
-.small{font-size:13px;}
-.bold{font-weight:500;}
-.history-list{max-height:66vh;overflow:auto;margin-top:12px;}
-.history-item{padding:6px;border-radius:8px;border:1px solid #eef3ff;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
-.flex-col{display:flex;flex-direction:column;gap:6px;}
-@media (max-width:980px){.wrap{grid-template-columns:1fr;}}
-</style>
-</head>
-<body>
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diesel Tank Measurement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    * {
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .tank-gradient {
+      background: linear-gradient(145deg, #0c1222 0%, #1a2744 50%, #0f172a 100%);
+    }
+    .card-glass {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .input-dark:focus {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+    .glow-amber {
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.15);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: rgba(30, 41, 59, 0.5);
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 3px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
 
-<!-- Auth Panel -->
-<div class="--main"  id="authPanel">
-<div  class="card box">
-  <h4 class="--mb">Register</h4>
-  <label>First Name</label>
-  <input id="firstName" placeholder="Your first name (for registration)" />
-  <label>Email</label>
-  <input id="email" type="email" placeholder="Email" />
-  <label>Password</label>
-  <input id="password" type="password" placeholder="Password" />
-  <div style="margin-top:10px;display:flex;gap:10px">
-    <button id="registerBtn">Register</button>
-    <button id="loginBtn" class="ghost
-    ">Login</button>
-    <button id="logoutBtn" class="ghost" style="display:none">Logout</button>
+ <body class="h-full tank-gradient text-slate-100 overflow-auto">
+  <div id="app-wrapper" class="w-full min-h-full">
+    <!-- Auth Panel -->
+   <div id="authPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm">
+    <div class="card-glass rounded-2xl p-8 w-full max-w-md glow-amber fade-in">
+     <div class="flex items-center gap-3 mb-6">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+       </svg>
+      </div>
+      <div>
+       <h2 class="text-xl font-bold text-white">Welcome</h2>
+       <p class="text-slate-400 text-sm">Sign in to access console</p>
+      </div>
+     </div>
+     <div class="space-y-4">
+      <div>
+        <label for="firstName" class="block text-sm font-medium text-slate-300 mb-2">First Name</label> 
+        <input type="text" id="firstName" placeholder="Your first name" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+      </div>
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email</label> <input type="email" id="email" placeholder="your@email.com" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+      </div>
+      <div><label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label> <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+      </div>
+     </div>
+     <div class="flex gap-3 mt-6"><button id="registerBtn" class="flex-1 py-3 px-4 rounded-xl btn-primary text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"> Register </button> <button id="loginBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-semibold transition-all border border-slate-600"> Login </button>
+     </div>
+     <button id="logoutBtn" class="hidden w-full mt-3 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold transition-all border border-red-500/30"> Logout </button>
+     <p id="authMsg" class="text-center text-sm mt-4 text-slate-400"></p>
+    </div>
+   </div>
+   
+   <!-- Main Content -->
+   <div class="w-full p-4 md:p-8 wrap"><!-- Header -->
+    <header class="max-w-7xl mx-auto mb-8">
+     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="app-title" class="text-2xl md:text-3xl font-bold text-white">Diesel Tank Measurement Console</h1>
+        <p id="subtitle" class="text-slate-400 mt-1">Calculate diesel volumes for rectangular, vertical, and horizontal tanks</p>
+       </div>
+      </div>
+      <div id="welcomeUser" class="text-amber-400 font-semibold text-sm bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20"></div>
+     </div>
+    </header>
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- Calculator Card -->
+     <section class="card-glass rounded-3xl p-6 md:p-8 glow-amber">
+      <div class="flex items-center gap-3 mb-6">
+       <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+       </div>
+       <h2 class="text-xl font-bold text-white">Volume Calculator</h2>
+      </div>
+      <div class="space-y-5">
+       <div>
+        <label for="site" class="block text-sm font-medium text-slate-300 mb-2">Site / Location <span class="text-slate-500">(optional)</span></label> <input type="text" id="site" placeholder="e.g. Mast A - Ikeja" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+       </div>
+
+       <div>
+        <label for="tankType" class="block text-sm font-medium text-slate-300 mb-2">Tank Type</label> 
+        <select id="tankType" class="w-full px-4 py-3 rounded-xl input-dark text-white focus:outline-none transition-all cursor-pointer"> 
+          <option value="rectangular">Rectangular</option>
+           <option value="vertical">Vertical Cylindrical</option> 
+          <option value="horizontal">Horizontal Cylindrical</option> 
+        </select>
+       </div>
+
+       <!-- Dynamic Fields Container -->
+       <div id="fields" class="space-y-4"></div>
+
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label for="dipBefore" class="block text-sm font-medium text-slate-300 mb-2">Before Offload Dip (cm)</label> 
+          <input type="number" id="dipBefore" placeholder="Measured dip before" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+        </div>
+        <div>
+          
+          <label for="dipAfter" class="block text-sm font-medium text-slate-300 mb-2">After Offload Dip (cm)</label> 
+          <input type="number" id="dipAfter" placeholder="Measured dip after" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all">
+        </div>
+       </div>
+
+       <div class="flex flex-wrap gap-3 pt-2"><button id="calcBtn" class="flex-1 min-w-[120px] py-3 px-6 rounded-xl btn-primary text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+         </svg> Calculate </button> <button id="saveBtn" class="py-3 px-6 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-semibold transition-all border border-slate-600 flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+         </svg> Save </button> <button id="clearBtn" class="py-3 px-6 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-semibold transition-all border border-slate-600 flex items-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+         </svg> Clear </button>
+       </div>
+       
+       <!-- Result Panel -->
+       <div id="resultPanel" class="hidden mt-6 p-5 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 fade-in">
+        <div class="flex items-center gap-3 mb-4">
+         <div class="w-10 h-10 rounded-xl bg-amber-500/30 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+         </div>
+         <h3 class="text-lg font-bold text-white">Calculation Results</h3>
+        </div>
+        <div id="resultContent" class="space-y-3 text-slate-200"></div>
+       </div>
+      </div>
+
+     </section>
+     <!-- History Card -->
+     <section class="card-glass rounded-3xl p-6 md:p-8">
+      <div class="flex items-center justify-between mb-6">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+         <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+        <h2 class="text-xl font-bold text-white">Saved Records</h2>
+       </div>
+       <div id="status" class="text-sm px-3 py-1 rounded-full bg-slate-700/50 text-slate-400">
+        Connecting...
+       </div>
+      </div>
+      <div class="flex gap-3 mb-4"><input type="text" id="filterSite" placeholder="Filter by site..." class="flex-1 px-4 py-2.5 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all text-sm"> <button id="refreshBtn" class="py-2.5 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg> Refresh </button>
+      </div><!-- History List -->
+      <div id="history" class="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin pr-2">
+       <div class="text-center py-12 text-slate-500">
+        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p>No records saved yet</p>
+        <p class="text-sm mt-1">Calculate and save your first measurement</p>
+       </div>
+      </div>
+      <div class="flex gap-3 mt-6 pt-4 border-t border-slate-700/50"><button id="clearAllBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg> Clear All </button> <button id="downloadBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg> Download CSV </button>
+      </div>
+     </section>
+    </main>
+   </div>
+   <!-- Toast Notification -->
+   <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <div id="toast-content" class="px-5 py-4 rounded-xl shadow-xl flex items-center gap-3 border bg-slate-800 border-slate-700"><span id="toast-icon"></span> <span id="toast-message" class="text-white"></span>
+    </div>
+   </div>
   </div>
-  <p class="muted small" id="authMsg"></p>
-</div>
-</div>
-
-
-
-
-<div class="wrap">
-<!-- Header -->
-<header>
-<h4>Diesel Tank Measurement Console</h4>
-<p class="lead">Calculate diesel volumes for rectangular, vertical, and horizontal tanks — save records to Database.</p>
- <div class="muted small" style="font-weight: 600; margin-top: 30px" id="welcomeUser"></div>
-</header>
-
-<!-- Left: Calculator -->
-<div class="card">
-<label>Site / Location (optional)</label>
-<input id="site" placeholder="e.g. Mast A - Ikeja" />
-
-<label>Tank Type</label>
-<select id="tankType">
-<option value="rectangular">Rectangular</option>
-<option value="vertical">Vertical Cylindrical</option>
-<option value="horizontal">Horizontal Cylindrical</option>
-</select>
-
-<div id="fields" style="margin-top:8px"></div>
-
-<div class="row" style="margin-top:10px">
-<div>
-<label>Before Offload Dip (cm)</label>
-<input id="dipBefore" type="number" placeholder="Measured dip before offload" />
-</div>
-<div>
-<label>After Offload Dip (cm)</label>
-<input id="dipAfter" type="number" placeholder="Measured dip after offload" />
-</div>
-</div>
-
-<div style="display:flex;gap:10px;margin-top:12px">
-<button id="calcBtn">Calculate</button>
-<button id="saveBtn" class="ghost">Save</button>
-<button id="clearBtn" class="ghost">Clear</button>
-</div>
-
-<div id="resultPanel" class="result" style="display:none"></div>
-</div>
-
-<!-- Right: History -->
-<div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center">
-<strong>Saved Records</strong>
-<div class="muted small" id="status">Connecting...</div>
-</div>
-
-<div style="margin-top:10px;display:flex;gap:8px">
-<input id="filterSite" placeholder="Filter by site..." class="small" style="flex:1;padding:8px" />
-<button id="refreshBtn" class="ghost">Refresh</button>
-</div>
-
-<div class="history-list" id="history"></div>
-<div style="margin-top:10px;display:flex;gap:8px">
-<button id="clearAllBtn" class="ghost">Clear form</button>
-<button id="downloadBtn" class="ghost">Download CSV</button>
-</div>
-</div>
-</div>
-
+  
 <!-- Firebase v9 modular -->
 <script type="module">
 // ----- REPLACE firebaseConfig with your project's config -----
@@ -244,19 +340,26 @@ function renderFields(){
 
   if(t==='rectangular'){
     fields.innerHTML=`
-<label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 120">
-<label>Width (cm)</label><input id="W" type="number" placeholder="e.g. 60">
-<label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 80">`;
+<label class="block text-sm font-medium text-slate-300">Length (cm)</label>
+<input id="L" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" type="number" placeholder="e.g. 120">
+<label class="block text-sm font-medium text-slate-300">Width (cm)</label>
+<input class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" id="W" type="number" placeholder="e.g. 60">
+<label class="block text-sm font-medium text-slate-300" >Tank Height (cm) — full internal height</label>
+<input class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" id="H" type="number" placeholder="e.g. 80">`;
 
   } else if(t==='vertical'){
     fields.innerHTML=`
-<label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
-<label>Tank Height (cm) — full internal height</label><input id="H" type="number" placeholder="e.g. 160">`;
+<label class="block text-sm font-medium text-slate-300">Radius (cm)</label>
+<input id="R" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" type="number" placeholder="e.g. 50">
+<label class="block text-sm font-medium text-slate-300">Tank Height (cm) — full internal height</label>
+<input id="H" type="number" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" placeholder="e.g. 160">`;
 
   } else if(t==='horizontal'){
     fields.innerHTML=`
-<label>Radius (cm)</label><input id="R" type="number" placeholder="e.g. 50">
-<label>Length (cm)</label><input id="L" type="number" placeholder="e.g. 150">`;
+<label class="block text-sm font-medium text-slate-300" >Radius (cm)</label>
+<input id="R" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" type="number" placeholder="e.g. 50">
+<label class="block text-sm font-medium text-slate-300" >Length (cm)</label>
+<input id="L" class="w-full px-4 py-3 rounded-xl input-dark text-white placeholder-slate-500 focus:outline-none transition-all" type="number" placeholder="e.g. 150">`;
   }
 }
 
@@ -398,10 +501,13 @@ function renderHistory(items){
     <div class="muted bold small">Dip AFter Height: ${it.dipAfter}cm</div>`;  
 
     const right=document.createElement('div'); 
-    right.style.textAlign='right';  
+    right.style.textAlign='left';  
 
     right.innerHTML =
-    `<div class="muted bold small">${renderDims(it.dims)}</div><div style="margin-top:8px"><button data-id="${it.id}" class="ghost">Delete</button></div>`;
+    `<div class="muted bold small">${renderDims(it.dims)}</div>
+    <div style="margin-top:8px">
+      <button data-id="${it.id}" class="bg-red-600 btn py-2 px-6 rounded-xl">Delete</button>
+    </div>`;
 
     el.appendChild(left); 
     el.appendChild(right); 
