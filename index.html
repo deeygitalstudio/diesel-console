@@ -66,7 +66,7 @@
   <div id="app-wrapper" class="w-full min-h-full">
     <!-- Auth Panel -->
    <div id="authPanel" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm">
-    <div class="card-glass rounded-2xl p-8 w-full max-w-md glow-amber fade-in">
+    <div class="card-glass rounded-2xl mx-auto p-8 w-full max-w-md glow-amber fade-in">
      <div class="flex items-center gap-3 mb-6">
       <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -94,7 +94,6 @@
       <button id="registerBtn" class="flex-1 py-3 px-4 rounded-xl btn-primary text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"> Register </button> 
       <button id="loginBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-semibold transition-all border border-slate-600"> Login </button>
      </div>
-     <button id="logoutBtn" class="hidden w-full mt-3 py-3 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold transition-all border border-red-500/30"> Logout </button>
      <p id="authMsg" class="text-center text-sm mt-4 text-slate-400"></p>
     </div>
    </div>
@@ -201,7 +200,8 @@
         <button id="refreshBtn" class="py-2.5 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg> Refresh </button>
-      </div><!-- History List -->
+      </div>
+      <!-- History List -->
       <div id="history" class="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin pr-2">
        <div class="text-center py-12 text-slate-500">
         <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -210,11 +210,13 @@
         <p class="text-sm mt-1">Calculate and save your first measurement</p>
        </div>
       </div>
-      <div class="flex gap-3 mt-6 pt-4 border-t border-slate-700/50"><button id="clearAllBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg> Clear All </button> <button id="downloadBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
+      <div class="flex gap-3 mt-6 pt-4 border-t border-slate-700/50">
+         <button id="downloadBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg> Download CSV </button>
+        <button id="logoutBtn" class="flex-1 py-3 px-4 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white font-medium transition-all border border-slate-600 text-sm flex items-center justify-center gap-2">
+        Logout </button> 
+       
       </div>
      </section>
     </main>
